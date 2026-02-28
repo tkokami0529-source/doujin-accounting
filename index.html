@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#6C5CE7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>同人会計 - DoujinPOS</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header id="header">
+      <div class="header-left">
+        <h1 id="page-title">DoujinPOS</h1>
+      </div>
+      <div class="header-right">
+        <span id="sync-status" class="sync-badge" title="同期状態">
+          <span class="sync-icon">○</span>
+          <span class="sync-text">未接続</span>
+        </span>
+        <button id="btn-dark-mode" class="icon-btn" title="ダークモード切替">🌙</button>
+      </div>
+    </header>
+
+    <!-- Views -->
+    <main id="main">
+      <!-- ===== HOME VIEW ===== -->
+      <section id="view-home" class="view active">
+        <div class="view-content">
+          <div class="welcome-card">
+            <h2>ようこそ DoujinPOS へ</h2>
+            <p>同人イベント特化の会計アプリ</p>
+          </div>
+
+          <div class="section-header">
+            <h3>イベント一覧</h3>
+            <button id="btn-add-event" class="btn btn-primary btn-sm">+ 新規イベント</button>
+          </div>
+          <div id="event-list" class="card-list">
+            <div class="empty-state">
+              <span class="empty-icon">📅</span>
+              <p>イベントがありません</p>
+              <p class="text-muted">「新規イベント」ボタンで追加しましょう</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PRODUCTS VIEW ===== -->
+      <section id="view-products" class="view">
+        <div class="view-content">
+          <div class="section-header">
+            <h3>商品マスター</h3>
+            <button id="btn-add-product" class="btn btn-primary btn-sm">+ 商品追加</button>
+          </div>
+          <div id="product-list" class="card-list">
+            <div class="empty-state">
+              <span class="empty-icon">📦</span>
+              <p>商品がありません</p>
+              <p class="text-muted">まず商品を登録して、イベントに持ち込み設定しましょう</p>
+            </div>
+          </div>
+
+          <div class="section-header" style="margin-top:24px;">
+            <h3>セット販売</h3>
+            <button id="btn-add-set" class="btn btn-primary btn-sm">+ セット追加</button>
+          </div>
+          <div id="set-list" class="card-list">
+            <div class="empty-state">
+              <span class="empty-icon">🎁</span>
+              <p>セットがありません</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== REGISTER VIEW ===== -->
+      <section id="view-register" class="view">
+        <div class="view-content register-layout">
+          <div class="register-top">
+            <div class="register-goal" id="register-goal">
+              <div class="goal-bar">
+                <div class="goal-fill" id="goal-fill"></div>
+              </div>
+              <span class="goal-text" id="goal-text">目標: 未設定</span>
+            </div>
+            <div class="register-cart" id="register-cart">
+              <div class="cart-empty">商品をタップして追加</div>
+            </div>
+            <div class="register-total">
+              <div class="total-row">
+                <span>合計</span>
+                <span id="cart-total" class="total-amount">¥0</span>
+              </div>
+            </div>
+          </div>
+          <div class="register-products" id="register-products">
+            <div class="empty-state">
+              <span class="empty-icon">📦</span>
+              <p>商品を登録してください</p>
+            </div>
+          </div>
+          <div class="register-actions">
+            <button id="btn-payment" class="btn btn-success btn-lg" disabled>お会計</button>
+            <button id="btn-clear-cart" class="btn btn-outline btn-lg">クリア</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SALES VIEW ===== -->
+      <section id="view-sales" class="view">
+        <div class="view-content">
+          <div class="stats-grid">
+            <div class="stat-card primary">
+              <div class="stat-label">総売上</div>
+              <div class="stat-value" id="stat-total-sales">¥0</div>
+            </div>
+            <div class="stat-card success">
+              <div class="stat-label">純利益</div>
+              <div class="stat-value" id="stat-net-profit">¥0</div>
+            </div>
+            <div class="stat-card info">
+              <div class="stat-label">取引数</div>
+              <div class="stat-value" id="stat-transactions">0</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-label">客単価</div>
+              <div class="stat-value" id="stat-avg-price">¥0</div>
+            </div>
+          </div>
+
+          <div class="section-header">
+            <h3>時間帯別売上</h3>
+          </div>
+          <div class="chart-container">
+            <canvas id="hourly-chart"></canvas>
+          </div>
+
+          <div class="section-header">
+            <h3>商品別売上</h3>
+          </div>
+          <div id="product-sales-list" class="card-list"></div>
+
+          <div class="section-header">
+            <h3>取引履歴</h3>
+            <button id="btn-export-csv" class="btn btn-outline btn-sm">CSV出力</button>
+          </div>
+          <div id="sales-history" class="card-list"></div>
+        </div>
+      </section>
+
+      <!-- ===== GIFTS VIEW ===== -->
+      <section id="view-gifts" class="view">
+        <div class="view-content">
+          <div class="section-header">
+            <h3>差し入れメモ</h3>
+            <button id="btn-add-gift" class="btn btn-primary btn-sm">+ 記録する</button>
+          </div>
+          <div id="gift-list" class="card-list">
+            <div class="empty-state">
+              <span class="empty-icon">🎀</span>
+              <p>差し入れの記録がありません</p>
+              <p class="text-muted">いただいた差し入れを写真付きで記録しましょう</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== SETTINGS VIEW ===== -->
+      <section id="view-settings" class="view">
+        <div class="view-content">
+          <h3>設定</h3>
+
+          <div class="settings-group">
+            <h4>同期設定</h4>
+            <div class="setting-item">
+              <label>ルームID（同じIDのデバイスと同期）</label>
+              <div class="input-row">
+                <input type="text" id="sync-room-id" placeholder="例: my-circle-c104" class="input">
+                <button id="btn-generate-room" class="btn btn-outline btn-sm">自動生成</button>
+              </div>
+            </div>
+            <div class="setting-item">
+              <label>Firebase設定</label>
+              <textarea id="firebase-config" class="input textarea" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'></textarea>
+            </div>
+            <div class="setting-item">
+              <button id="btn-connect-sync" class="btn btn-primary">同期を開始</button>
+              <button id="btn-disconnect-sync" class="btn btn-outline" style="display:none;">同期を停止</button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h4>イベント設定</h4>
+            <div class="setting-item">
+              <label>売上目標 (円)</label>
+              <input type="number" id="setting-goal" placeholder="例: 50000" class="input">
+              <button id="btn-save-goal" class="btn btn-primary btn-sm" style="margin-top:8px;">保存</button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h4>データ管理</h4>
+            <div class="setting-item btn-group-vertical">
+              <button id="btn-export-data" class="btn btn-outline">データをエクスポート (JSON)</button>
+              <button id="btn-import-data" class="btn btn-outline">データをインポート</button>
+              <input type="file" id="import-file" accept=".json" style="display:none;">
+              <button id="btn-reset-data" class="btn btn-danger">全データをリセット</button>
+            </div>
+          </div>
+
+          <div class="settings-group">
+            <h4>アプリ情報</h4>
+            <p class="text-muted">DoujinPOS v1.0</p>
+            <p class="text-muted">同人イベント特化会計アプリ</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav id="bottom-nav">
+      <button class="nav-item" data-view="products">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">商品</span>
+      </button>
+      <button class="nav-item active" data-view="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">イベント</span>
+      </button>
+      <button class="nav-item" data-view="register">
+        <span class="nav-icon">🛒</span>
+        <span class="nav-label">レジ</span>
+      </button>
+      <button class="nav-item" data-view="sales">
+        <span class="nav-icon">📊</span>
+        <span class="nav-label">売上</span>
+      </button>
+      <button class="nav-item" data-view="gifts">
+        <span class="nav-icon">🎀</span>
+        <span class="nav-label">差入れ</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">設定</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ===== MODALS ===== -->
+
+  <!-- Event Modal -->
+  <div id="modal-event" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="modal-event-title">新規イベント</h3>
+      <div class="form-group">
+        <label>イベント名</label>
+        <input type="text" id="event-name" class="input" placeholder="例: コミケC105">
+      </div>
+      <div class="form-group">
+        <label>開催日</label>
+        <input type="date" id="event-date" class="input">
+      </div>
+      <div class="form-group">
+        <label>場所</label>
+        <input type="text" id="event-location" class="input" placeholder="例: 東京ビッグサイト 東ホール">
+      </div>
+      <div class="form-group">
+        <label>持ち込み商品</label>
+        <div id="event-product-checklist" class="set-checklist"></div>
+        <p class="text-muted" style="font-size:12px;margin-top:4px;">チェックした商品をこのイベントに持ち込みます。持込数を設定してください。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">キャンセル</button>
+        <button id="btn-save-event" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div id="modal-product" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="modal-product-title">商品追加</h3>
+      <div class="form-group">
+        <label>商品名</label>
+        <input type="text" id="product-name" class="input" placeholder="例: 新刊「○○」">
+      </div>
+      <div class="form-group">
+        <label>販売価格 (円)</label>
+        <input type="number" id="product-price" class="input" placeholder="例: 500" min="0">
+      </div>
+      <div class="form-group">
+        <label>原価 (円)</label>
+        <input type="number" id="product-cost" class="input" placeholder="例: 200" min="0">
+      </div>
+      <div class="form-group">
+        <label>カテゴリ</label>
+        <select id="product-category" class="input">
+          <option value="doujinshi">同人誌</option>
+          <option value="goods">グッズ</option>
+          <option value="cd">CD/音楽</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>カラー（レジ表示用）</label>
+        <div class="color-picker">
+          <button class="color-opt selected" data-color="#6C5CE7" style="background:#6C5CE7"></button>
+          <button class="color-opt" data-color="#00B894" style="background:#00B894"></button>
+          <button class="color-opt" data-color="#FD79A8" style="background:#FD79A8"></button>
+          <button class="color-opt" data-color="#FDCB6E" style="background:#FDCB6E"></button>
+          <button class="color-opt" data-color="#74B9FF" style="background:#74B9FF"></button>
+          <button class="color-opt" data-color="#E17055" style="background:#E17055"></button>
+          <button class="color-opt" data-color="#A29BFE" style="background:#A29BFE"></button>
+          <button class="color-opt" data-color="#55EFC4" style="background:#55EFC4"></button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">キャンセル</button>
+        <button id="btn-save-product" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="modal-payment" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content modal-payment-content">
+      <h3>お会計</h3>
+      <div class="payment-total">
+        <span>合計金額</span>
+        <span id="payment-total-amount" class="payment-amount">¥0</span>
+      </div>
+      <div class="form-group">
+        <label>決済方法</label>
+        <div class="payment-method-selector" id="payment-method-selector">
+          <button class="payment-method-btn active" data-method="cash">現金</button>
+          <button class="payment-method-btn" data-method="paypay">PayPay</button>
+          <button class="payment-method-btn" data-method="credit">クレジット</button>
+          <button class="payment-method-btn" data-method="other_pay">その他</button>
+        </div>
+      </div>
+      <div id="cash-payment-section">
+        <div class="form-group">
+          <label>お預かり金額</label>
+          <input type="number" id="payment-received" class="input input-large" placeholder="0" min="0" inputmode="numeric">
+        </div>
+        <div class="quick-amounts" id="quick-amounts"></div>
+        <div id="change-display" class="change-display" style="display:none;">
+          <div class="change-label">お釣り</div>
+          <div class="change-amount" id="change-amount">¥0</div>
+          <div class="change-breakdown" id="change-breakdown"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">キャンセル</button>
+        <button id="btn-confirm-payment" class="btn btn-success btn-lg" disabled>会計確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Set Modal -->
+  <div id="modal-set" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="modal-set-title">セット追加</h3>
+      <div class="form-group">
+        <label>セット名</label>
+        <input type="text" id="set-name" class="input" placeholder="例: 既刊3冊セット">
+      </div>
+      <div class="form-group">
+        <label>セット価格 (円)</label>
+        <input type="number" id="set-price" class="input" placeholder="例: 1000" min="0">
+      </div>
+      <div class="form-group">
+        <label>含まれる商品</label>
+        <div id="set-product-checklist" class="set-checklist"></div>
+      </div>
+      <div class="form-group">
+        <label>カラー</label>
+        <div class="color-picker" id="set-color-picker">
+          <button class="color-opt-set selected" data-color="#E17055" style="background:#E17055"></button>
+          <button class="color-opt-set" data-color="#00B894" style="background:#00B894"></button>
+          <button class="color-opt-set" data-color="#FD79A8" style="background:#FD79A8"></button>
+          <button class="color-opt-set" data-color="#FDCB6E" style="background:#FDCB6E"></button>
+          <button class="color-opt-set" data-color="#74B9FF" style="background:#74B9FF"></button>
+          <button class="color-opt-set" data-color="#6C5CE7" style="background:#6C5CE7"></button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">キャンセル</button>
+        <button id="btn-save-set" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gift Modal -->
+  <div id="modal-gift" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="modal-gift-title">差し入れを記録</h3>
+      <div class="form-group">
+        <label>送り主</label>
+        <input type="text" id="gift-from" class="input" placeholder="例: ○○さん（任意）">
+      </div>
+      <div class="form-group">
+        <label>内容メモ</label>
+        <textarea id="gift-note" class="input textarea" placeholder="例: お菓子の詰め合わせ、手紙付き" style="font-family:inherit;font-size:14px;min-height:60px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>写真</label>
+        <div class="gift-photo-area" id="gift-photo-area">
+          <div class="gift-photo-placeholder" id="gift-photo-placeholder">
+            <span style="font-size:32px;">📷</span>
+            <span>タップして撮影 / 選択</span>
+          </div>
+          <img id="gift-photo-preview" class="gift-photo-preview" style="display:none;" alt="プレビュー">
+          <button id="gift-photo-remove" class="btn btn-sm btn-danger gift-photo-remove-btn" style="display:none;">写真を削除</button>
+        </div>
+        <input type="file" id="gift-photo-input" accept="image/*" capture="environment" style="display:none;">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">キャンセル</button>
+        <button id="btn-save-gift" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div id="modal-confirm" class="modal">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <h3 id="confirm-title">確認</h3>
+      <p id="confirm-message"></p>
+      <div class="modal-actions">
+        <button class="btn btn-outline modal-cancel">キャンセル</button>
+        <button id="btn-confirm-ok" class="btn btn-danger">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
