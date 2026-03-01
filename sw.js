@@ -1,4 +1,4 @@
-const CACHE_NAME = 'doujinpos-v1';
+const CACHE_NAME = 'doujinpos-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -6,6 +6,22 @@ const ASSETS = [
   './app.js',
   './manifest.json',
   './icons/icon.svg',
+];
+
+// URLs that should always go network-first (auth, payments, APIs)
+const NETWORK_FIRST_PATTERNS = [
+  'firebasejs',
+  'firestore',
+  'googleapis.com',
+  'firebase',
+  'identitytoolkit',
+  'securetoken',
+  'accounts.google.com',
+  'stripe.com',
+  'js.stripe.com',
+  'checkout.stripe.com',
+  'cloudfunctions.net',
+  'run.app',
 ];
 
 self.addEventListener('install', (event) => {
@@ -25,14 +41,17 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network-first for Firebase, cache-first for app assets
-  if (event.request.url.includes('firebasejs') || event.request.url.includes('firestore')) {
+  const url = event.request.url;
+
+  // Network-first for Firebase, Auth, Stripe, and Cloud Functions
+  if (NETWORK_FIRST_PATTERNS.some((p) => url.includes(p))) {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
 
+  // Stale-while-revalidate for app assets
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request).then((response) => {
